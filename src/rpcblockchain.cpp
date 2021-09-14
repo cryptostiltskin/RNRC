@@ -3,8 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "main.h"
 #include "bitcoinrpc.h"
+#include "main.h"
 
 using namespace json_spirit;
 using namespace std;
@@ -16,8 +16,7 @@ double GetDifficulty(const CBlockIndex* blockindex)
 {
     // Floating point number that is a multiple of the minimum difficulty,
     // minimum difficulty = 1.0.
-    if (blockindex == NULL)
-    {
+    if (blockindex == NULL) {
         if (pindexBest == NULL)
             return 1.0;
         else
@@ -29,13 +28,11 @@ double GetDifficulty(const CBlockIndex* blockindex)
     double dDiff =
         (double)0x0000ffff / (double)(blockindex->nBits & 0x00ffffff);
 
-    while (nShift < 29)
-    {
+    while (nShift < 29) {
         dDiff *= 256.0;
         nShift++;
     }
-    while (nShift > 29)
-    {
+    while (nShift > 29) {
         dDiff /= 256.0;
         nShift--;
     }
@@ -45,8 +42,8 @@ double GetDifficulty(const CBlockIndex* blockindex)
 
 double GetPoWMHashPS()
 {
-//    if (pindexBest->nHeight >= LAST_POW_BLOCK)
-//        return 0;
+    //    if (pindexBest->nHeight >= LAST_POW_BLOCK)
+    //        return 0;
 
     int nPoWInterval = 72;
     int64_t nTargetSpacingWorkMin = 30, nTargetSpacingWork = 30;
@@ -54,10 +51,8 @@ double GetPoWMHashPS()
     CBlockIndex* pindex = pindexGenesisBlock;
     CBlockIndex* pindexPrevWork = pindexGenesisBlock;
 
-    while (pindex)
-    {
-        if (pindex->IsProofOfWork())
-        {
+    while (pindex) {
+        if (pindex->IsProofOfWork()) {
             int64_t nActualSpacingWork = pindex->GetBlockTime() - pindexPrevWork->GetBlockTime();
             nTargetSpacingWork = ((nPoWInterval - 1) * nTargetSpacingWork + nActualSpacingWork + nActualSpacingWork) / (nPoWInterval + 1);
             nTargetSpacingWork = max(nTargetSpacingWork, nTargetSpacingWorkMin);
@@ -76,13 +71,12 @@ double GetPoSKernelPS()
     double dStakeKernelsTriedAvg = 0;
     int nStakesHandled = 0, nStakesTime = 0;
 
-    CBlockIndex* pindex = pindexBest;;
+    CBlockIndex* pindex = pindexBest;
+    ;
     CBlockIndex* pindexPrevStake = NULL;
 
-    while (pindex && nStakesHandled < nPoSInterval)
-    {
-        if (pindex->IsProofOfStake())
-        {
+    while (pindex && nStakesHandled < nPoSInterval) {
+        if (pindex->IsProofOfStake()) {
             dStakeKernelsTriedAvg += GetDifficulty(pindex) * 4294967296.0;
             nStakesTime += pindexPrevStake ? (pindexPrevStake->nTime - pindex->nTime) : 0;
             pindexPrevStake = pindex;
@@ -118,24 +112,21 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fPri
     if (blockindex->pnext)
         result.push_back(Pair("nextblockhash", blockindex->pnext->GetBlockHash().GetHex()));
 
-    result.push_back(Pair("flags", strprintf("%s%s", blockindex->IsProofOfStake()? "proof-of-stake" : "proof-of-work", blockindex->GeneratedStakeModifier()? " stake-modifier": "")));
+    result.push_back(Pair("flags", strprintf("%s%s", blockindex->IsProofOfStake() ? "proof-of-stake" : "proof-of-work", blockindex->GeneratedStakeModifier() ? " stake-modifier" : "")));
     result.push_back(Pair("proofhash", blockindex->hashProof.GetHex()));
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
-    result.push_back(Pair("modifier", strprintf("%016"PRIx64, blockindex->nStakeModifier)));
+    result.push_back(Pair("modifier", strprintf("%016" PRIx64, blockindex->nStakeModifier)));
     result.push_back(Pair("modifierchecksum", strprintf("%08x", blockindex->nStakeModifierChecksum)));
     Array txinfo;
-    BOOST_FOREACH (const CTransaction& tx, block.vtx)
-    {
-        if (fPrintTransactionDetail)
-        {
+    BOOST_FOREACH (const CTransaction& tx, block.vtx) {
+        if (fPrintTransactionDetail) {
             Object entry;
 
             entry.push_back(Pair("txid", tx.GetHash().GetHex()));
             TxToJSON(tx, 0, entry);
 
             txinfo.push_back(entry);
-        }
-        else
+        } else
             txinfo.push_back(tx.GetHash().GetHex());
     }
 
@@ -176,9 +167,9 @@ Value getdifficulty(const Array& params, bool fHelp)
             "Returns the difficulty as a multiple of the minimum difficulty.");
 
     Object obj;
-    obj.push_back(Pair("proof-of-work",        GetDifficulty()));
-    obj.push_back(Pair("proof-of-stake",       GetDifficulty(GetLastBlockIndex(pindexBest, true))));
-    obj.push_back(Pair("search-interval",      (int)nLastCoinStakeSearchInterval));
+    obj.push_back(Pair("proof-of-work", GetDifficulty()));
+    obj.push_back(Pair("proof-of-stake", GetDifficulty(GetLastBlockIndex(pindexBest, true))));
+    obj.push_back(Pair("search-interval", (int)nLastCoinStakeSearchInterval));
     return obj;
 }
 
@@ -191,7 +182,7 @@ Value settxfee(const Array& params, bool fHelp)
             "<amount> is a real and is rounded to the nearest 0.01");
 
     nTransactionFee = AmountFromValue(params[0]);
-    nTransactionFee = (nTransactionFee / CENT) * CENT;  // round to cent
+    nTransactionFee = (nTransactionFee / CENT) * CENT; // round to cent
 
     return true;
 }
@@ -207,7 +198,7 @@ Value getrawmempool(const Array& params, bool fHelp)
     mempool.queryHashes(vtxid);
 
     Array a;
-    BOOST_FOREACH(const uint256& hash, vtxid)
+    BOOST_FOREACH (const uint256& hash, vtxid)
         a.push_back(hash.ToString());
 
     return a;

@@ -1,22 +1,21 @@
 #ifndef BITCOINUNITS_H
 #define BITCOINUNITS_H
 
-#include <QString>
 #include <QAbstractListModel>
+#include <QString>
 
 /** Bitcoin unit definitions. Encapsulates parsing and formatting
    and serves as list model for drop-down selection boxes.
 */
-class BitcoinUnits: public QAbstractListModel
+class BitcoinUnits : public QAbstractListModel
 {
 public:
-    explicit BitcoinUnits(QObject *parent);
+    explicit BitcoinUnits(QObject* parent);
 
     /** Bitcoin units.
       @note Source: https://en.bitcoin.it/wiki/Units . Please add only sensible ones
      */
-    enum Unit
-    {
+    enum Unit {
         BTC,
         mBTC,
         uBTC
@@ -41,11 +40,11 @@ public:
     //! Number of decimals left
     static int decimals(int unit);
     //! Format as string
-    static QString format(int unit, qint64 amount, bool plussign=false);
+    static QString format(int unit, qint64 amount, bool plussign = false);
     //! Format as string (with unit)
-    static QString formatWithUnit(int unit, qint64 amount, bool plussign=false);
+    static QString formatWithUnit(int unit, qint64 amount, bool plussign = false);
     //! Parse string to coin amount
-    static bool parse(int unit, const QString &value, qint64 *val_out);
+    static bool parse(int unit, const QString& value, qint64* val_out);
     ///@}
 
     //! @name AbstractListModel implementation
@@ -55,8 +54,8 @@ public:
         /** Unit identifier */
         UnitRole = Qt::UserRole
     };
-    int rowCount(const QModelIndex &parent) const;
-    QVariant data(const QModelIndex &index, int role) const;
+    int rowCount(const QModelIndex& parent) const;
+    QVariant data(const QModelIndex& index, int role) const;
     ///@}
 private:
     QList<BitcoinUnits::Unit> unitlist;

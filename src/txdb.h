@@ -8,4 +8,4 @@
 
 #include "txdb-leveldb.h"
 
-#endif  // BITCOIN_TXDB_H
+#endif // BITCOIN_TXDB_H

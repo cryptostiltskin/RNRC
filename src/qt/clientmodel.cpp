@@ -1,21 +1,24 @@
 #include "clientmodel.h"
+#include "addresstablemodel.h"
 #include "guiconstants.h"
 #include "optionsmodel.h"
-#include "addresstablemodel.h"
 #include "transactiontablemodel.h"
 
 #include "alert.h"
 #include "main.h"
 #include "ui_interface.h"
 
+#include <boost/bind/bind.hpp>
+
 #include <QDateTime>
 #include <QTimer>
 
+using namespace boost::placeholders;
+
 static const int64_t nClientStartupTime = GetTime();
 
-ClientModel::ClientModel(OptionsModel *optionsModel, QObject *parent) :
-    QObject(parent), optionsModel(optionsModel),
-    cachedNumBlocks(0), cachedNumBlocksOfPeers(0), pollTimer(0)
+ClientModel::ClientModel(OptionsModel* optionsModel, QObject* parent) : QObject(parent), optionsModel(optionsModel),
+                                                                        cachedNumBlocks(0), cachedNumBlocksOfPeers(0), pollTimer(0)
 {
     numBlocksAtStartup = -1;
 
@@ -64,15 +67,14 @@ void ClientModel::updateTimer()
     // periodical polls if the core is holding the locks for a longer time -
     // for example, during a wallet rescan.
     TRY_LOCK(cs_main, lockMain);
-    if(!lockMain)
+    if (!lockMain)
         return;
     // Some quantities (such as number of blocks) change so fast that we don't want to be notified for each change.
     // Periodically check and update with a timer.
     int newNumBlocks = getNumBlocks();
     int newNumBlocksOfPeers = getNumBlocksOfPeers();
 
-    if(cachedNumBlocks != newNumBlocks || cachedNumBlocksOfPeers != newNumBlocksOfPeers)
-    {
+    if (cachedNumBlocks != newNumBlocks || cachedNumBlocksOfPeers != newNumBlocksOfPeers) {
         cachedNumBlocks = newNumBlocks;
         cachedNumBlocksOfPeers = newNumBlocksOfPeers;
 
@@ -85,16 +87,14 @@ void ClientModel::updateNumConnections(int numConnections)
     emit numConnectionsChanged(numConnections);
 }
 
-void ClientModel::updateAlert(const QString &hash, int status)
+void ClientModel::updateAlert(const QString& hash, int status)
 {
     // Show error message notification for new alert
-    if(status == CT_NEW)
-    {
+    if (status == CT_NEW) {
         uint256 hash_256;
         hash_256.SetHex(hash.toStdString());
         CAlert alert = CAlert::getAlertByHash(hash_256);
-        if(!alert.IsNull())
-        {
+        if (!alert.IsNull()) {
             emit error(tr("Network Alert"), QString::fromStdString(alert.strStatusBar), false);
         }
     }
@@ -124,7 +124,7 @@ QString ClientModel::getStatusBarWarnings() const
     return QString::fromStdString(GetWarnings("statusbar"));
 }
 
-OptionsModel *ClientModel::getOptionsModel()
+OptionsModel* ClientModel::getOptionsModel()
 {
     return optionsModel;
 }
@@ -150,20 +150,20 @@ QString ClientModel::formatClientStartupTime() const
 }
 
 // Handlers for core signals
-static void NotifyBlocksChanged(ClientModel *clientmodel)
+static void NotifyBlocksChanged(ClientModel* clientmodel)
 {
     // This notification is too frequent. Don't trigger a signal.
     // Don't remove it, though, as it might be useful later.
 }
 
-static void NotifyNumConnectionsChanged(ClientModel *clientmodel, int newNumConnections)
+static void NotifyNumConnectionsChanged(ClientModel* clientmodel, int newNumConnections)
 {
     // Too noisy: OutputDebugStringF("NotifyNumConnectionsChanged %i\n", newNumConnections);
     QMetaObject::invokeMethod(clientmodel, "updateNumConnections", Qt::QueuedConnection,
                               Q_ARG(int, newNumConnections));
 }
 
-static void NotifyAlertChanged(ClientModel *clientmodel, const uint256 &hash, ChangeType status)
+static void NotifyAlertChanged(ClientModel* clientmodel, const uint256& hash, ChangeType status)
 {
     OutputDebugStringF("NotifyAlertChanged %s status=%i\n", hash.GetHex().c_str(), status);
     QMetaObject::invokeMethod(clientmodel, "updateAlert", Qt::QueuedConnection,

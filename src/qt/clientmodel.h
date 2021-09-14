@@ -18,10 +18,10 @@ class ClientModel : public QObject
 {
     Q_OBJECT
 public:
-    explicit ClientModel(OptionsModel *optionsModel, QObject *parent = 0);
+    explicit ClientModel(OptionsModel* optionsModel, QObject* parent = 0);
     ~ClientModel();
 
-    OptionsModel *getOptionsModel();
+    OptionsModel* getOptionsModel();
 
     int getNumConnections() const;
     int getNumBlocks() const;
@@ -44,14 +44,14 @@ public:
     QString formatClientStartupTime() const;
 
 private:
-    OptionsModel *optionsModel;
+    OptionsModel* optionsModel;
 
     int cachedNumBlocks;
     int cachedNumBlocksOfPeers;
 
     int numBlocksAtStartup;
 
-    QTimer *pollTimer;
+    QTimer* pollTimer;
 
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
@@ -60,12 +60,12 @@ signals:
     void numBlocksChanged(int count, int countOfPeers);
 
     //! Asynchronous error notification
-    void error(const QString &title, const QString &message, bool modal);
+    void error(const QString& title, const QString& message, bool modal);
 
 public slots:
     void updateTimer();
     void updateNumConnections(int numConnections);
-    void updateAlert(const QString &hash, int status);
+    void updateAlert(const QString& hash, int status);
 };
 
 #endif // CLIENTMODEL_H

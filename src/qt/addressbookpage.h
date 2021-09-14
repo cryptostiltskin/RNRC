@@ -4,7 +4,7 @@
 #include <QDialog>
 
 namespace Ui {
-    class AddressBookPage;
+class AddressBookPage;
 }
 class AddressTableModel;
 class OptionsModel;
@@ -34,27 +34,27 @@ public:
         ForEditing  /**< Open address book for editing */
     };
 
-    explicit AddressBookPage(Mode mode, Tabs tab, QWidget *parent = 0);
+    explicit AddressBookPage(Mode mode, Tabs tab, QWidget* parent = 0);
     ~AddressBookPage();
 
-    void setModel(AddressTableModel *model);
-    void setOptionsModel(OptionsModel *optionsModel);
-    const QString &getReturnValue() const { return returnValue; }
+    void setModel(AddressTableModel* model);
+    void setOptionsModel(OptionsModel* optionsModel);
+    const QString& getReturnValue() const { return returnValue; }
 
 public slots:
     void done(int retval);
     void exportClicked();
 
 private:
-    Ui::AddressBookPage *ui;
-    AddressTableModel *model;
-    OptionsModel *optionsModel;
+    Ui::AddressBookPage* ui;
+    AddressTableModel* model;
+    OptionsModel* optionsModel;
     Mode mode;
     Tabs tab;
     QString returnValue;
-    QSortFilterProxyModel *proxyModel;
-    QMenu *contextMenu;
-    QAction *deleteAction;
+    QSortFilterProxyModel* proxyModel;
+    QMenu* contextMenu;
+    QAction* deleteAction;
     QString newAddressToSelect;
 
 private slots:
@@ -67,7 +67,7 @@ private slots:
     void selectionChanged();
     void on_showQRCode_clicked();
     /** Spawn contextual menu (right mouse menu) for address book entry */
-    void contextualMenu(const QPoint &point);
+    void contextualMenu(const QPoint& point);
 
     /** Copy label of currently selected address entry to clipboard */
     void onCopyLabelAction();
@@ -75,7 +75,7 @@ private slots:
     void onEditAction();
 
     /** New entry/entries were added to address table */
-    void selectNewAddress(const QModelIndex &parent, int begin, int end);
+    void selectNewAddress(const QModelIndex& parent, int begin, int end);
 
 signals:
     void signMessage(QString addr);

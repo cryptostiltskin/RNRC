@@ -1,9 +1,9 @@
-#include <boost/test/unit_test.hpp>
 #include <boost/foreach.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "base58.h"
-#include "util.h"
 #include "bitcoinrpc.h"
+#include "util.h"
 
 using namespace std;
 using namespace json_spirit;
@@ -11,7 +11,7 @@ using namespace json_spirit;
 BOOST_AUTO_TEST_SUITE(rpc_tests)
 
 static Array
-createArgs(int nRequired, const char* address1=NULL, const char* address2=NULL)
+createArgs(int nRequired, const char* address1 = NULL, const char* address2 = NULL)
 {
     Array result;
     result.push_back(nRequired);
@@ -52,10 +52,10 @@ BOOST_AUTO_TEST_CASE(rpc_addmultisig)
     BOOST_CHECK_THROW(addmultisig(createArgs(1, ""), false), runtime_error);
     BOOST_CHECK_THROW(addmultisig(createArgs(1, "NotAValidPubkey"), false), runtime_error);
 
-    string short1(address1Hex, address1Hex+sizeof(address1Hex)-2); // last byte missing
+    string short1(address1Hex, address1Hex + sizeof(address1Hex) - 2); // last byte missing
     BOOST_CHECK_THROW(addmultisig(createArgs(2, short1.c_str()), false), runtime_error);
 
-    string short2(address1Hex+1, address1Hex+sizeof(address1Hex)); // first byte missing
+    string short2(address1Hex + 1, address1Hex + sizeof(address1Hex)); // first byte missing
     BOOST_CHECK_THROW(addmultisig(createArgs(2, short2.c_str()), false), runtime_error);
 }
 

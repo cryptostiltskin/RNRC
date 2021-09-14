@@ -48,16 +48,16 @@ void CUnsignedAlert::SetNull()
 std::string CUnsignedAlert::ToString() const
 {
     std::string strSetCancel;
-    BOOST_FOREACH(int n, setCancel)
+    BOOST_FOREACH (int n, setCancel)
         strSetCancel += strprintf("%d ", n);
     std::string strSetSubVer;
-    BOOST_FOREACH(std::string str, setSubVer)
+    BOOST_FOREACH (std::string str, setSubVer)
         strSetSubVer += "\"" + str + "\" ";
     return strprintf(
         "CAlert(\n"
         "    nVersion     = %d\n"
-        "    nRelayUntil  = %"PRId64"\n"
-        "    nExpiration  = %"PRId64"\n"
+        "    nRelayUntil  = %" PRId64 "\n"
+        "    nExpiration  = %" PRId64 "\n"
         "    nID          = %d\n"
         "    nCancel      = %d\n"
         "    setCancel    = %s\n"
@@ -134,12 +134,10 @@ bool CAlert::RelayTo(CNode* pnode) const
     if (!IsInEffect())
         return false;
     // returns true if wasn't already contained in the set
-    if (pnode->setKnown.insert(GetHash()).second)
-    {
+    if (pnode->setKnown.insert(GetHash()).second) {
         if (AppliesTo(pnode->nVersion, pnode->strSubVer) ||
             AppliesToMe() ||
-            GetAdjustedTime() < nRelayUntil)
-        {
+            GetAdjustedTime() < nRelayUntil) {
             pnode->PushMessage("alert", *this);
             return true;
         }
@@ -161,13 +159,13 @@ bool CAlert::CheckSignature() const
     return true;
 }
 
-CAlert CAlert::getAlertByHash(const uint256 &hash)
+CAlert CAlert::getAlertByHash(const uint256& hash)
 {
     CAlert retval;
     {
         LOCK(cs_mapAlerts);
         map<uint256, CAlert>::iterator mi = mapAlerts.find(hash);
-        if(mi != mapAlerts.end())
+        if (mi != mapAlerts.end())
             retval = mi->second;
     }
     return retval;
@@ -188,48 +186,39 @@ bool CAlert::ProcessAlert(bool fThread)
     // send an "everything is OK, don't panic" version that
     // cannot be overridden):
     int maxInt = std::numeric_limits<int>::max();
-    if (nID == maxInt)
-    {
+    if (nID == maxInt) {
         if (!(
                 nExpiration == maxInt &&
-                nCancel == (maxInt-1) &&
+                nCancel == (maxInt - 1) &&
                 nMinVer == 0 &&
                 nMaxVer == maxInt &&
                 setSubVer.empty() &&
                 nPriority == maxInt &&
-                strStatusBar == "URGENT: Alert key compromised, upgrade required"
-                ))
+                strStatusBar == "URGENT: Alert key compromised, upgrade required"))
             return false;
     }
 
     {
         LOCK(cs_mapAlerts);
         // Cancel previous alerts
-        for (map<uint256, CAlert>::iterator mi = mapAlerts.begin(); mi != mapAlerts.end();)
-        {
+        for (map<uint256, CAlert>::iterator mi = mapAlerts.begin(); mi != mapAlerts.end();) {
             const CAlert& alert = (*mi).second;
-            if (Cancels(alert))
-            {
+            if (Cancels(alert)) {
                 printf("cancelling alert %d\n", alert.nID);
                 uiInterface.NotifyAlertChanged((*mi).first, CT_DELETED);
                 mapAlerts.erase(mi++);
-            }
-            else if (!alert.IsInEffect())
-            {
+            } else if (!alert.IsInEffect()) {
                 printf("expiring alert %d\n", alert.nID);
                 uiInterface.NotifyAlertChanged((*mi).first, CT_DELETED);
                 mapAlerts.erase(mi++);
-            }
-            else
+            } else
                 mi++;
         }
 
         // Check if this alert has been cancelled
-        BOOST_FOREACH(PAIRTYPE(const uint256, CAlert)& item, mapAlerts)
-        {
+        BOOST_FOREACH (PAIRTYPE(const uint256, CAlert) & item, mapAlerts) {
             const CAlert& alert = item.second;
-            if (alert.Cancels(*this))
-            {
+            if (alert.Cancels(*this)) {
                 printf("alert already cancelled by %d\n", alert.nID);
                 return false;
             }
@@ -238,12 +227,10 @@ bool CAlert::ProcessAlert(bool fThread)
         // Add to mapAlerts
         mapAlerts.insert(make_pair(GetHash(), *this));
         // Notify UI and -alertnotify if it applies to me
-        if(AppliesToMe())
-        {
+        if (AppliesToMe()) {
             uiInterface.NotifyAlertChanged(GetHash(), CT_NEW);
             std::string strCmd = GetArg("-alertnotify", "");
-            if (!strCmd.empty())
-            {
+            if (!strCmd.empty()) {
                 // Alert text should be plain ascii coming from a trusted source, but to
                 // be safe we first strip anything not in safeChars, then add single quotes around
                 // the whole string before passing it to the shell:
@@ -252,12 +239,11 @@ bool CAlert::ProcessAlert(bool fThread)
                 // even possibly remotely dangerous like & or >
                 std::string safeChars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890 .,;_/:?@");
                 std::string safeStatus;
-                for (std::string::size_type i = 0; i < strStatusBar.size(); i++)
-                {
+                for (std::string::size_type i = 0; i < strStatusBar.size(); i++) {
                     if (safeChars.find(strStatusBar[i]) != std::string::npos)
                         safeStatus.push_back(strStatusBar[i]);
                 }
-                safeStatus = singleQuote+safeStatus+singleQuote;
+                safeStatus = singleQuote + safeStatus + singleQuote;
                 boost::replace_all(strCmd, "%s", safeStatus);
 
                 if (fThread)

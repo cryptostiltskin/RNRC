@@ -1,13 +1,13 @@
 #include "overviewpage.h"
 #include "ui_overviewpage.h"
 
-#include "walletmodel.h"
 #include "bitcoinunits.h"
-#include "optionsmodel.h"
-#include "transactiontablemodel.h"
-#include "transactionfilterproxy.h"
-#include "guiutil.h"
 #include "guiconstants.h"
+#include "guiutil.h"
+#include "optionsmodel.h"
+#include "transactionfilterproxy.h"
+#include "transactiontablemodel.h"
+#include "walletmodel.h"
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
@@ -19,13 +19,12 @@ class TxViewDelegate : public QAbstractItemDelegate
 {
     Q_OBJECT
 public:
-    TxViewDelegate(): QAbstractItemDelegate(), unit(BitcoinUnits::BTC)
+    TxViewDelegate() : QAbstractItemDelegate(), unit(BitcoinUnits::BTC)
     {
-
     }
 
-    inline void paint(QPainter *painter, const QStyleOptionViewItem &option,
-                      const QModelIndex &index ) const
+    inline void paint(QPainter* painter, const QStyleOptionViewItem& option,
+                      const QModelIndex& index) const
     {
         painter->save();
 
@@ -34,9 +33,9 @@ public:
         QRect decorationRect(mainRect.topLeft(), QSize(DECORATION_SIZE, DECORATION_SIZE));
         int xspace = DECORATION_SIZE + 8;
         int ypad = 6;
-        int halfheight = (mainRect.height() - 2*ypad)/2;
-        QRect amountRect(mainRect.left() + xspace, mainRect.top()+ypad, mainRect.width() - xspace, halfheight);
-        QRect addressRect(mainRect.left() + xspace, mainRect.top()+ypad+halfheight, mainRect.width() - xspace, halfheight);
+        int halfheight = (mainRect.height() - 2 * ypad) / 2;
+        QRect amountRect(mainRect.left() + xspace, mainRect.top() + ypad, mainRect.width() - xspace, halfheight);
+        QRect addressRect(mainRect.left() + xspace, mainRect.top() + ypad + halfheight, mainRect.width() - xspace, halfheight);
         icon.paint(painter, decorationRect);
 
         QDateTime date = index.data(TransactionTableModel::DateRole).toDateTime();
@@ -45,59 +44,50 @@ public:
         bool confirmed = index.data(TransactionTableModel::ConfirmedRole).toBool();
         QVariant value = index.data(Qt::ForegroundRole);
         QColor foreground = option.palette.color(QPalette::Text);
-        if(qVariantCanConvert<QColor>(value))
-        {
+        if (qVariantCanConvert<QColor>(value)) {
             foreground = qvariant_cast<QColor>(value);
         }
 
         painter->setPen(foreground);
-        painter->drawText(addressRect, Qt::AlignLeft|Qt::AlignVCenter, address);
+        painter->drawText(addressRect, Qt::AlignLeft | Qt::AlignVCenter, address);
 
-        if(amount < 0)
-        {
+        if (amount < 0) {
             foreground = COLOR_NEGATIVE;
-        }
-        else if(!confirmed)
-        {
+        } else if (!confirmed) {
             foreground = COLOR_UNCONFIRMED;
-        }
-        else
-        {
+        } else {
             foreground = COLOR_WHITE;
         }
         painter->setPen(foreground);
         QString amountText = BitcoinUnits::formatWithUnit(unit, amount, true);
-        if(!confirmed)
-        {
+        if (!confirmed) {
             amountText = QString("[") + amountText + QString("]");
         }
-        painter->drawText(amountRect, Qt::AlignRight|Qt::AlignVCenter, amountText);
+        painter->drawText(amountRect, Qt::AlignRight | Qt::AlignVCenter, amountText);
 
         painter->setPen(COLOR_WHITE);
-        painter->drawText(amountRect, Qt::AlignLeft|Qt::AlignVCenter, GUIUtil::dateTimeStr(date));
+        painter->drawText(amountRect, Qt::AlignLeft | Qt::AlignVCenter, GUIUtil::dateTimeStr(date));
 
         painter->restore();
     }
 
-    inline QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+    inline QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
     {
         return QSize(DECORATION_SIZE, DECORATION_SIZE);
     }
 
     int unit;
-
 };
 #include "overviewpage.moc"
 
-OverviewPage::OverviewPage(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::OverviewPage),
-    currentBalance(-1),
-    currentStake(0),
-    currentUnconfirmedBalance(-1),
-    currentImmatureBalance(-1),
-    txdelegate(new TxViewDelegate()),
-    filter(0)
+OverviewPage::OverviewPage(QWidget* parent) : QWidget(parent),
+                                              ui(new Ui::OverviewPage),
+                                              currentBalance(-1),
+                                              currentStake(0),
+                                              currentUnconfirmedBalance(-1),
+                                              currentImmatureBalance(-1),
+                                              txdelegate(new TxViewDelegate()),
+                                              filter(0)
 {
     ui->setupUi(this);
 
@@ -117,9 +107,9 @@ OverviewPage::OverviewPage(QWidget *parent) :
     showOutOfSyncWarning(true);
 }
 
-void OverviewPage::handleTransactionClicked(const QModelIndex &index)
+void OverviewPage::handleTransactionClicked(const QModelIndex& index)
 {
-    if(filter)
+    if (filter)
         emit transactionClicked(filter->mapToSource(index));
 }
 
@@ -148,11 +138,10 @@ void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBa
     ui->labelImmatureText->setVisible(showImmature);
 }
 
-void OverviewPage::setModel(WalletModel *model)
+void OverviewPage::setModel(WalletModel* model)
 {
     this->model = model;
-    if(model && model->getOptionsModel())
-    {
+    if (model && model->getOptionsModel()) {
         // Set up transaction list
         filter = new TransactionFilterProxy();
         filter->setSourceModel(model->getTransactionTableModel());
@@ -178,9 +167,8 @@ void OverviewPage::setModel(WalletModel *model)
 
 void OverviewPage::updateDisplayUnit()
 {
-    if(model && model->getOptionsModel())
-    {
-        if(currentBalance != -1)
+    if (model && model->getOptionsModel()) {
+        if (currentBalance != -1)
             setBalance(currentBalance, model->getStake(), currentUnconfirmedBalance, currentImmatureBalance);
 
         // Update txdelegate->unit with the current unit

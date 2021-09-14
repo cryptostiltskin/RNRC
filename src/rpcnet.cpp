@@ -2,11 +2,11 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "net.h"
-#include "bitcoinrpc.h"
 #include "alert.h"
-#include "wallet.h"
+#include "bitcoinrpc.h"
 #include "db.h"
+#include "net.h"
+#include "wallet.h"
 #include "walletdb.h"
 
 using namespace json_spirit;
@@ -29,7 +29,7 @@ static void CopyNodeStats(std::vector<CNodeStats>& vstats)
 
     LOCK(cs_vNodes);
     vstats.reserve(vNodes.size());
-    BOOST_FOREACH(CNode* pnode, vNodes) {
+    BOOST_FOREACH (CNode* pnode, vNodes) {
         CNodeStats stats;
         pnode->copyStats(stats);
         vstats.push_back(stats);
@@ -48,11 +48,11 @@ Value getpeerinfo(const Array& params, bool fHelp)
 
     Array ret;
 
-    BOOST_FOREACH(const CNodeStats& stats, vstats) {
+    BOOST_FOREACH (const CNodeStats& stats, vstats) {
         Object obj;
 
         obj.push_back(Pair("addr", stats.addrName));
-        obj.push_back(Pair("services", strprintf("%08"PRIx64, stats.nServices)));
+        obj.push_back(Pair("services", strprintf("%08" PRIx64, stats.nServices)));
         obj.push_back(Pair("lastsend", (int64_t)stats.nLastSend));
         obj.push_back(Pair("lastrecv", (int64_t)stats.nLastRecv));
         obj.push_back(Pair("conntime", (int64_t)stats.nTimeConnected));
@@ -67,8 +67,8 @@ Value getpeerinfo(const Array& params, bool fHelp)
 
     return ret;
 }
- 
-// ppcoin: send alert.  
+
+// ppcoin: send alert.
 // There is a known deadlock situation with ThreadMessageHandler
 // ThreadMessageHandler: holds cs_vSend and acquiring cs_main in SendMessages()
 // ThreadRPCServer: holds cs_main and acquiring cs_vSend in alert.RelayTo()/PushMessage()/BeginMessage()
@@ -97,8 +97,8 @@ Value sendalert(const Array& params, bool fHelp)
     if (params.size() > 6)
         alert.nCancel = params[6].get_int();
     alert.nVersion = PROTOCOL_VERSION;
-    alert.nRelayUntil = GetAdjustedTime() + 365*24*60*60;
-    alert.nExpiration = GetAdjustedTime() + 365*24*60*60;
+    alert.nRelayUntil = GetAdjustedTime() + 365 * 24 * 60 * 60;
+    alert.nExpiration = GetAdjustedTime() + 365 * 24 * 60 * 60;
 
     CDataStream sMsg(SER_NETWORK, PROTOCOL_VERSION);
     sMsg << (CUnsignedAlert)alert;
@@ -108,14 +108,14 @@ Value sendalert(const Array& params, bool fHelp)
     key.SetPrivKey(CPrivKey(vchPrivKey.begin(), vchPrivKey.end())); // if key is not correct openssl may crash
     if (!key.Sign(Hash(alert.vchMsg.begin(), alert.vchMsg.end()), alert.vchSig))
         throw runtime_error(
-            "Unable to sign alert, check private key?\n");  
-    if(!alert.ProcessAlert()) 
+            "Unable to sign alert, check private key?\n");
+    if (!alert.ProcessAlert())
         throw runtime_error(
             "Failed to process alert.\n");
     // Relay alert
     {
         LOCK(cs_vNodes);
-        BOOST_FOREACH(CNode* pnode, vNodes)
+        BOOST_FOREACH (CNode* pnode, vNodes)
             alert.RelayTo(pnode);
     }
 

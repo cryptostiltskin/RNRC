@@ -1,23 +1,23 @@
 #include "guiutil.h"
 #include "bitcoinaddressvalidator.h"
-#include "walletmodel.h"
 #include "bitcoinunits.h"
-#include "util.h"
 #include "init.h"
+#include "util.h"
+#include "walletmodel.h"
 
-#include <QString>
-#include <QDateTime>
-#include <QDoubleValidator>
-#include <QFont>
-#include <QLineEdit>
-#include <QUrl>
-#include <QTextDocument> // For Qt::escape
 #include <QAbstractItemView>
 #include <QApplication>
 #include <QClipboard>
-#include <QFileDialog>
+#include <QDateTime>
 #include <QDesktopServices>
+#include <QDoubleValidator>
+#include <QFileDialog>
+#include <QFont>
+#include <QLineEdit>
+#include <QString>
+#include <QTextDocument> // For Qt::escape
 #include <QThread>
+#include <QUrl>
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -35,14 +35,14 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include "shlwapi.h"
-#include "shlobj.h"
 #include "shellapi.h"
+#include "shlobj.h"
+#include "shlwapi.h"
 #endif
 
 namespace GUIUtil {
 
-QString dateTimeStr(const QDateTime &date)
+QString dateTimeStr(const QDateTime& date)
 {
     return date.date().toString(Qt::SystemLocaleShortDate) + QString(" ") + date.toString("hh:mm");
 }
@@ -63,52 +63,45 @@ QFont bitcoinAddressFont()
     return font;
 }
 
-void setupAddressWidget(QLineEdit *widget, QWidget *parent)
+void setupAddressWidget(QLineEdit* widget, QWidget* parent)
 {
     widget->setMaxLength(BitcoinAddressValidator::MaxAddressLength);
     widget->setValidator(new BitcoinAddressValidator(parent));
     widget->setFont(bitcoinAddressFont());
 }
 
-void setupAmountWidget(QLineEdit *widget, QWidget *parent)
+void setupAmountWidget(QLineEdit* widget, QWidget* parent)
 {
-    QDoubleValidator *amountValidator = new QDoubleValidator(parent);
+    QDoubleValidator* amountValidator = new QDoubleValidator(parent);
     amountValidator->setDecimals(8);
     amountValidator->setBottom(0.0);
     widget->setValidator(amountValidator);
-    widget->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+    widget->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 }
 
-bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
+bool parseBitcoinURI(const QUrl& uri, SendCoinsRecipient* out)
 {
     // NovaCoin: check prefix
-    if(uri.scheme() != QString("RNRC"))
+    if (uri.scheme() != QString("RNRC"))
         return false;
 
     SendCoinsRecipient rv;
     rv.address = uri.path();
     rv.amount = 0;
-    QList<QPair<QString, QString> > items = uri.queryItems();
-    for (QList<QPair<QString, QString> >::iterator i = items.begin(); i != items.end(); i++)
-    {
+    QList<QPair<QString, QString>> items = uri.queryItems();
+    for (QList<QPair<QString, QString>>::iterator i = items.begin(); i != items.end(); i++) {
         bool fShouldReturnFalse = false;
-        if (i->first.startsWith("req-"))
-        {
+        if (i->first.startsWith("req-")) {
             i->first.remove(0, 4);
             fShouldReturnFalse = true;
         }
 
-        if (i->first == "label")
-        {
+        if (i->first == "label") {
             rv.label = i->second;
             fShouldReturnFalse = false;
-        }
-        else if (i->first == "amount")
-        {
-            if(!i->second.isEmpty())
-            {
-                if(!BitcoinUnits::parse(BitcoinUnits::BTC, i->second, &rv.amount))
-                {
+        } else if (i->first == "amount") {
+            if (!i->second.isEmpty()) {
+                if (!BitcoinUnits::parse(BitcoinUnits::BTC, i->second, &rv.amount)) {
                     return false;
                 }
             }
@@ -118,21 +111,19 @@ bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
         if (fShouldReturnFalse)
             return false;
     }
-    if(out)
-    {
+    if (out) {
         *out = rv;
     }
     return true;
 }
 
-bool parseBitcoinURI(QString uri, SendCoinsRecipient *out)
+bool parseBitcoinURI(QString uri, SendCoinsRecipient* out)
 {
     // Convert RNRC:// to RNRC:
     //
     //    Cannot handle this later, because bitcoin:// will cause Qt to see the part after // as host,
     //    which will lower-case it (and thus invalidate the address).
-    if(uri.startsWith("RNRC://"))
-    {
+    if (uri.startsWith("RNRC://")) {
         uri.replace(0, 12, "RNRC:");
     }
     QUrl uriInstance(uri);
@@ -142,8 +133,7 @@ bool parseBitcoinURI(QString uri, SendCoinsRecipient *out)
 QString HtmlEscape(const QString& str, bool fMultiLine)
 {
     QString escaped = Qt::escape(str);
-    if(fMultiLine)
-    {
+    if (fMultiLine) {
         escaped = escaped.replace("\n", "<br>\n");
     }
     return escaped;
@@ -154,32 +144,29 @@ QString HtmlEscape(const std::string& str, bool fMultiLine)
     return HtmlEscape(QString::fromStdString(str), fMultiLine);
 }
 
-void copyEntryData(QAbstractItemView *view, int column, int role)
+void copyEntryData(QAbstractItemView* view, int column, int role)
 {
-    if(!view || !view->selectionModel())
+    if (!view || !view->selectionModel())
         return;
     QModelIndexList selection = view->selectionModel()->selectedRows(column);
 
-    if(!selection.isEmpty())
-    {
+    if (!selection.isEmpty()) {
         // Copy first item
         QApplication::clipboard()->setText(selection.at(0).data(role).toString());
     }
 }
 
-QString getSaveFileName(QWidget *parent, const QString &caption,
-                                 const QString &dir,
-                                 const QString &filter,
-                                 QString *selectedSuffixOut)
+QString getSaveFileName(QWidget* parent, const QString& caption,
+                        const QString& dir,
+                        const QString& filter,
+                        QString* selectedSuffixOut)
 {
     QString selectedFilter;
     QString myDir;
-    if(dir.isEmpty()) // Default to user documents location
+    if (dir.isEmpty()) // Default to user documents location
     {
         myDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
-    }
-    else
-    {
+    } else {
         myDir = dir;
     }
     QString result = QFileDialog::getSaveFileName(parent, caption, myDir, filter, &selectedFilter);
@@ -187,27 +174,23 @@ QString getSaveFileName(QWidget *parent, const QString &caption,
     /* Extract first suffix from filter pattern "Description (*.foo)" or "Description (*.foo *.bar ...) */
     QRegExp filter_re(".* \\(\\*\\.(.*)[ \\)]");
     QString selectedSuffix;
-    if(filter_re.exactMatch(selectedFilter))
-    {
+    if (filter_re.exactMatch(selectedFilter)) {
         selectedSuffix = filter_re.cap(1);
     }
 
     /* Add suffix if needed */
     QFileInfo info(result);
-    if(!result.isEmpty())
-    {
-        if(info.suffix().isEmpty() && !selectedSuffix.isEmpty())
-        {
+    if (!result.isEmpty()) {
+        if (info.suffix().isEmpty() && !selectedSuffix.isEmpty()) {
             /* No suffix specified, add selected suffix */
-            if(!result.endsWith("."))
+            if (!result.endsWith("."))
                 result.append(".");
             result.append(selectedSuffix);
         }
     }
 
     /* Return selected suffix if asked to */
-    if(selectedSuffixOut)
-    {
+    if (selectedSuffixOut) {
         *selectedSuffixOut = selectedSuffix;
     }
     return result;
@@ -215,30 +198,23 @@ QString getSaveFileName(QWidget *parent, const QString &caption,
 
 Qt::ConnectionType blockingGUIThreadConnection()
 {
-    if(QThread::currentThread() != QCoreApplication::instance()->thread())
-    {
+    if (QThread::currentThread() != QCoreApplication::instance()->thread()) {
         return Qt::BlockingQueuedConnection;
-    }
-    else
-    {
+    } else {
         return Qt::DirectConnection;
     }
 }
 
-bool checkPoint(const QPoint &p, const QWidget *w)
+bool checkPoint(const QPoint& p, const QWidget* w)
 {
-    QWidget *atW = qApp->widgetAt(w->mapToGlobal(p));
+    QWidget* atW = qApp->widgetAt(w->mapToGlobal(p));
     if (!atW) return false;
     return atW->topLevelWidget() == w;
 }
 
-bool isObscured(QWidget *w)
+bool isObscured(QWidget* w)
 {
-    return !(checkPoint(QPoint(0, 0), w)
-        && checkPoint(QPoint(w->width() - 1, 0), w)
-        && checkPoint(QPoint(0, w->height() - 1), w)
-        && checkPoint(QPoint(w->width() - 1, w->height() - 1), w)
-        && checkPoint(QPoint(w->width() / 2, w->height() / 2), w));
+    return !(checkPoint(QPoint(0, 0), w) && checkPoint(QPoint(w->width() - 1, 0), w) && checkPoint(QPoint(0, w->height() - 1), w) && checkPoint(QPoint(w->width() - 1, w->height() - 1), w) && checkPoint(QPoint(w->width() / 2, w->height() / 2), w));
 }
 
 void openDebugLogfile()
@@ -250,20 +226,16 @@ void openDebugLogfile()
         QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromStdString(pathDebug.string())));
 }
 
-ToolTipToRichTextFilter::ToolTipToRichTextFilter(int size_threshold, QObject *parent) :
-    QObject(parent), size_threshold(size_threshold)
+ToolTipToRichTextFilter::ToolTipToRichTextFilter(int size_threshold, QObject* parent) : QObject(parent), size_threshold(size_threshold)
 {
-
 }
 
-bool ToolTipToRichTextFilter::eventFilter(QObject *obj, QEvent *evt)
+bool ToolTipToRichTextFilter::eventFilter(QObject* obj, QEvent* evt)
 {
-    if(evt->type() == QEvent::ToolTipChange)
-    {
-        QWidget *widget = static_cast<QWidget*>(obj);
+    if (evt->type() == QEvent::ToolTipChange) {
+        QWidget* widget = static_cast<QWidget*>(obj);
         QString tooltip = widget->toolTip();
-        if(tooltip.size() > size_threshold && !tooltip.startsWith("<qt>") && !Qt::mightBeRichText(tooltip))
-        {
+        if (tooltip.size() > size_threshold && !tooltip.startsWith("<qt>") && !Qt::mightBeRichText(tooltip)) {
             // Prefix <qt/> to make sure Qt detects this as rich text
             // Escape the current message as HTML and replace \n by <br>
             tooltip = "<qt>" + HtmlEscape(tooltip, true) + "<qt/>";
@@ -291,18 +263,16 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     // If the shortcut exists already, remove it for updating
     boost::filesystem::remove(StartupShortcutPath());
 
-    if (fAutoStart)
-    {
+    if (fAutoStart) {
         CoInitialize(NULL);
 
         // Get a pointer to the IShellLink interface.
         IShellLink* psl = NULL;
         HRESULT hres = CoCreateInstance(CLSID_ShellLink, NULL,
-                                CLSCTX_INPROC_SERVER, IID_IShellLink,
-                                reinterpret_cast<void**>(&psl));
+                                        CLSCTX_INPROC_SERVER, IID_IShellLink,
+                                        reinterpret_cast<void**>(&psl));
 
-        if (SUCCEEDED(hres))
-        {
+        if (SUCCEEDED(hres)) {
             // Get the current executable path
             TCHAR pszExePath[MAX_PATH];
             GetModuleFileName(NULL, pszExePath, sizeof(pszExePath));
@@ -321,8 +291,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
             IPersistFile* ppf = NULL;
             hres = psl->QueryInterface(IID_IPersistFile,
                                        reinterpret_cast<void**>(&ppf));
-            if (SUCCEEDED(hres))
-            {
+            if (SUCCEEDED(hres)) {
                 WCHAR pwsz[MAX_PATH];
                 // Ensure that the string is ANSI.
                 MultiByteToWideChar(CP_ACP, 0, StartupShortcutPath().string().c_str(), -1, pwsz, MAX_PATH);
@@ -369,8 +338,7 @@ bool GetStartOnSystemStartup()
         return false;
     // Scan through file for "Hidden=true":
     std::string line;
-    while (!optionFile.eof())
-    {
+    while (!optionFile.eof()) {
         getline(optionFile, line);
         if (line.find("Hidden") != std::string::npos &&
             line.find("true") != std::string::npos)
@@ -385,16 +353,15 @@ bool SetStartOnSystemStartup(bool fAutoStart)
 {
     if (!fAutoStart)
         boost::filesystem::remove(GetAutostartFilePath());
-    else
-    {
-        char pszExePath[MAX_PATH+1];
+    else {
+        char pszExePath[MAX_PATH + 1];
         memset(pszExePath, 0, sizeof(pszExePath));
-        if (readlink("/proc/self/exe", pszExePath, sizeof(pszExePath)-1) == -1)
+        if (readlink("/proc/self/exe", pszExePath, sizeof(pszExePath) - 1) == -1)
             return false;
 
         boost::filesystem::create_directories(GetAutostartDir());
 
-        boost::filesystem::ofstream optionFile(GetAutostartFilePath(), std::ios_base::out|std::ios_base::trunc);
+        boost::filesystem::ofstream optionFile(GetAutostartFilePath(), std::ios_base::out | std::ios_base::trunc);
         if (!optionFile.good())
             return false;
         // Write a bitcoin.desktop file to the autostart directory:
@@ -418,20 +385,19 @@ bool SetStartOnSystemStartup(bool fAutoStart) { return false; }
 
 #endif
 
-HelpMessageBox::HelpMessageBox(QWidget *parent) :
-    QMessageBox(parent)
+HelpMessageBox::HelpMessageBox(QWidget* parent) : QMessageBox(parent)
 {
     header = tr("RNRC-Qt") + " " + tr("version") + " " +
-        QString::fromStdString(FormatFullVersion()) + "\n\n" +
-        tr("Usage:") + "\n" +
-        "  RNRC-qt [" + tr("command-line options") + "]                     " + "\n";
+             QString::fromStdString(FormatFullVersion()) + "\n\n" +
+             tr("Usage:") + "\n" +
+             "  RNRC-qt [" + tr("command-line options") + "]                     " + "\n";
 
     coreOptions = QString::fromStdString(HelpMessage());
 
     uiOptions = tr("UI options") + ":\n" +
-        "  -lang=<lang>           " + tr("Set language, for example \"de_DE\" (default: system locale)") + "\n" +
-        "  -min                   " + tr("Start minimized") + "\n" +
-        "  -splash                " + tr("Show splash screen on startup (default: 1)") + "\n";
+                "  -lang=<lang>           " + tr("Set language, for example \"de_DE\" (default: system locale)") + "\n" +
+                "  -min                   " + tr("Start minimized") + "\n" +
+                "  -splash                " + tr("Show splash screen on startup (default: 1)") + "\n";
 
     setWindowTitle(tr("RNRC-Qt"));
     setTextFormat(Qt::PlainText);
@@ -450,13 +416,12 @@ void HelpMessageBox::printToConsole()
 void HelpMessageBox::showOrPrint()
 {
 #if defined(WIN32)
-        // On Windows, show a message box, as there is no stderr/stdout in windowed applications
-        exec();
+    // On Windows, show a message box, as there is no stderr/stdout in windowed applications
+    exec();
 #else
-        // On other operating systems, print help text to console
-        printToConsole();
+    // On other operating systems, print help text to console
+    printToConsole();
 #endif
 }
 
 } // namespace GUIUtil
-

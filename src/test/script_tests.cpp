@@ -1,6 +1,6 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
+#include "json/json_spirit_reader_template.h"
+#include "json/json_spirit_utils.h"
+#include "json/json_spirit_writer_template.h"
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -8,9 +8,9 @@
 #include <boost/foreach.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/test/unit_test.hpp>
-#include "json/json_spirit_reader_template.h"
-#include "json/json_spirit_writer_template.h"
-#include "json/json_spirit_utils.h"
+#include <fstream>
+#include <iostream>
+#include <vector>
 
 #include "main.h"
 #include "wallet.h"
@@ -30,10 +30,8 @@ ParseScript(string s)
 
     static map<string, opcodetype> mapOpNames;
 
-    if (mapOpNames.size() == 0)
-    {
-        for (int op = OP_NOP; op <= OP_NOP10; op++)
-        {
+    if (mapOpNames.size() == 0) {
+        for (int op = OP_NOP; op <= OP_NOP10; op++) {
             const char* name = GetOpName((opcodetype)op);
             if (strcmp(name, "OP_UNKNOWN") == 0)
                 continue;
@@ -48,68 +46,54 @@ ParseScript(string s)
     vector<string> words;
     split(words, s, is_any_of(" \t\n"), token_compress_on);
 
-    BOOST_FOREACH(string w, words)
-    {
+    BOOST_FOREACH (string w, words) {
         if (all(w, is_digit()) ||
-            (starts_with(w, "-") && all(string(w.begin()+1, w.end()), is_digit())))
-        {
+            (starts_with(w, "-") && all(string(w.begin() + 1, w.end()), is_digit()))) {
             // Number
             int64 n = atoi64(w);
             result << n;
-        }
-        else if (starts_with(w, "0x") && IsHex(string(w.begin()+2, w.end())))
-        {
+        } else if (starts_with(w, "0x") && IsHex(string(w.begin() + 2, w.end()))) {
             // Raw hex data, inserted NOT pushed onto stack:
-            std::vector<unsigned char> raw = ParseHex(string(w.begin()+2, w.end()));
+            std::vector<unsigned char> raw = ParseHex(string(w.begin() + 2, w.end()));
             result.insert(result.end(), raw.begin(), raw.end());
-        }
-        else if (w.size() >= 2 && starts_with(w, "'") && ends_with(w, "'"))
-        {
+        } else if (w.size() >= 2 && starts_with(w, "'") && ends_with(w, "'")) {
             // Single-quoted string, pushed as data. NOTE: this is poor-man's
             // parsing, spaces/tabs/newlines in single-quoted strings won't work.
-            std::vector<unsigned char> value(w.begin()+1, w.end()-1);
+            std::vector<unsigned char> value(w.begin() + 1, w.end() - 1);
             result << value;
-        }
-        else if (mapOpNames.count(w))
-        {
+        } else if (mapOpNames.count(w)) {
             // opcode, e.g. OP_ADD or OP_1:
             result << mapOpNames[w];
-        }
-        else
-        {
+        } else {
             BOOST_ERROR("Parse error: " << s);
             return CScript();
-        }                        
+        }
     }
 
     return result;
 }
 
-Array
-read_json(const std::string& filename)
+Array read_json(const std::string& filename)
 {
     namespace fs = boost::filesystem;
     fs::path testFile = fs::current_path() / "test" / "data" / filename;
 
 #ifdef TEST_DATA_DIR
-    if (!fs::exists(testFile))
-    {
+    if (!fs::exists(testFile)) {
         testFile = fs::path(BOOST_PP_STRINGIZE(TEST_DATA_DIR)) / filename;
     }
 #endif
 
     ifstream ifs(testFile.string().c_str(), ifstream::in);
     Value v;
-    if (!read_stream(ifs, v))
-    {
+    if (!read_stream(ifs, v)) {
         if (ifs.fail())
             BOOST_ERROR("Cound not find/open " << filename);
         else
             BOOST_ERROR("JSON syntax error in " << filename);
         return Array();
     }
-    if (v.type() != array_type)
-    {
+    if (v.type() != array_type) {
         BOOST_ERROR(filename << " does not contain a json array");
         return Array();
     }
@@ -128,8 +112,7 @@ BOOST_AUTO_TEST_CASE(script_valid)
     // scripts.
     Array tests = read_json("script_valid.json");
 
-    BOOST_FOREACH(Value& tv, tests)
-    {
+    BOOST_FOREACH (Value& tv, tests) {
         Array test = tv.get_array();
         string strTest = write_string(tv, false);
         if (test.size() < 2) // Allow size > 2; extra stuff ignored (useful for comments)
@@ -152,8 +135,7 @@ BOOST_AUTO_TEST_CASE(script_invalid)
     // Scripts that should evaluate as invalid
     Array tests = read_json("script_invalid.json");
 
-    BOOST_FOREACH(Value& tv, tests)
-    {
+    BOOST_FOREACH (Value& tv, tests) {
         Array test = tv.get_array();
         string strTest = write_string(tv, false);
         if (test.size() < 2) // Allow size > 2; extra stuff ignored (useful for comments)
@@ -175,23 +157,23 @@ BOOST_AUTO_TEST_CASE(script_PushData)
 {
     // Check that PUSHDATA1, PUSHDATA2, and PUSHDATA4 create the same value on
     // the stack as the 1-75 opcodes do.
-    static const unsigned char direct[] = { 1, 0x5a };
-    static const unsigned char pushdata1[] = { OP_PUSHDATA1, 1, 0x5a };
-    static const unsigned char pushdata2[] = { OP_PUSHDATA2, 1, 0, 0x5a };
-    static const unsigned char pushdata4[] = { OP_PUSHDATA4, 1, 0, 0, 0, 0x5a };
+    static const unsigned char direct[] = {1, 0x5a};
+    static const unsigned char pushdata1[] = {OP_PUSHDATA1, 1, 0x5a};
+    static const unsigned char pushdata2[] = {OP_PUSHDATA2, 1, 0, 0x5a};
+    static const unsigned char pushdata4[] = {OP_PUSHDATA4, 1, 0, 0, 0, 0x5a};
 
-    vector<vector<unsigned char> > directStack;
+    vector<vector<unsigned char>> directStack;
     BOOST_CHECK(EvalScript(directStack, CScript(&direct[0], &direct[sizeof(direct)]), CTransaction(), 0, 0));
 
-    vector<vector<unsigned char> > pushdata1Stack;
+    vector<vector<unsigned char>> pushdata1Stack;
     BOOST_CHECK(EvalScript(pushdata1Stack, CScript(&pushdata1[0], &pushdata1[sizeof(pushdata1)]), CTransaction(), 0, 0));
     BOOST_CHECK(pushdata1Stack == directStack);
 
-    vector<vector<unsigned char> > pushdata2Stack;
+    vector<vector<unsigned char>> pushdata2Stack;
     BOOST_CHECK(EvalScript(pushdata2Stack, CScript(&pushdata2[0], &pushdata2[sizeof(pushdata2)]), CTransaction(), 0, 0));
     BOOST_CHECK(pushdata2Stack == directStack);
 
-    vector<vector<unsigned char> > pushdata4Stack;
+    vector<vector<unsigned char>> pushdata4Stack;
     BOOST_CHECK(EvalScript(pushdata4Stack, CScript(&pushdata4[0], &pushdata4[sizeof(pushdata4)]), CTransaction(), 0, 0));
     BOOST_CHECK(pushdata4Stack == directStack);
 }
@@ -211,8 +193,7 @@ sign_multisig(CScript scriptPubKey, std::vector<CKey> keys, CTransaction transac
     // and vice-versa)
     //
     result << OP_0;
-    BOOST_FOREACH(CKey key, keys)
-    {
+    BOOST_FOREACH (CKey key, keys) {
         vector<unsigned char> vchSig;
         BOOST_CHECK(key.Sign(hash, vchSig));
         vchSig.push_back((unsigned char)SIGHASH_ALL);
@@ -284,59 +265,66 @@ BOOST_AUTO_TEST_CASE(script_CHECKMULTISIG23)
     txTo23.vout[0].nValue = 1;
 
     std::vector<CKey> keys;
-    keys.push_back(key1); keys.push_back(key2);
+    keys.push_back(key1);
+    keys.push_back(key2);
     CScript goodsig1 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(VerifyScript(goodsig1, scriptPubKey23, txTo23, 0, true, 0));
 
     keys.clear();
-    keys.push_back(key1); keys.push_back(key3);
+    keys.push_back(key1);
+    keys.push_back(key3);
     CScript goodsig2 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(VerifyScript(goodsig2, scriptPubKey23, txTo23, 0, true, 0));
 
     keys.clear();
-    keys.push_back(key2); keys.push_back(key3);
+    keys.push_back(key2);
+    keys.push_back(key3);
     CScript goodsig3 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(VerifyScript(goodsig3, scriptPubKey23, txTo23, 0, true, 0));
 
     keys.clear();
-    keys.push_back(key2); keys.push_back(key2); // Can't re-use sig
+    keys.push_back(key2);
+    keys.push_back(key2); // Can't re-use sig
     CScript badsig1 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(!VerifyScript(badsig1, scriptPubKey23, txTo23, 0, true, 0));
 
     keys.clear();
-    keys.push_back(key2); keys.push_back(key1); // sigs must be in correct order
+    keys.push_back(key2);
+    keys.push_back(key1); // sigs must be in correct order
     CScript badsig2 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(!VerifyScript(badsig2, scriptPubKey23, txTo23, 0, true, 0));
 
     keys.clear();
-    keys.push_back(key3); keys.push_back(key2); // sigs must be in correct order
+    keys.push_back(key3);
+    keys.push_back(key2); // sigs must be in correct order
     CScript badsig3 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(!VerifyScript(badsig3, scriptPubKey23, txTo23, 0, true, 0));
 
     keys.clear();
-    keys.push_back(key4); keys.push_back(key2); // sigs must match pubkeys
+    keys.push_back(key4);
+    keys.push_back(key2); // sigs must match pubkeys
     CScript badsig4 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(!VerifyScript(badsig4, scriptPubKey23, txTo23, 0, true, 0));
 
     keys.clear();
-    keys.push_back(key1); keys.push_back(key4); // sigs must match pubkeys
+    keys.push_back(key1);
+    keys.push_back(key4); // sigs must match pubkeys
     CScript badsig5 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(!VerifyScript(badsig5, scriptPubKey23, txTo23, 0, true, 0));
 
     keys.clear(); // Must have signatures
     CScript badsig6 = sign_multisig(scriptPubKey23, keys, txTo23);
     BOOST_CHECK(!VerifyScript(badsig6, scriptPubKey23, txTo23, 0, true, 0));
-}    
+}
 
 BOOST_AUTO_TEST_CASE(script_combineSigs)
 {
     // Test the CombineSignatures function
     CBasicKeyStore keystore;
     vector<CKey> keys;
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         CKey key;
-        key.MakeNewKey(i%2 == 1);
+        key.MakeNewKey(i % 2 == 1);
         keys.push_back(key);
         keystore.AddKey(key);
     }
@@ -370,7 +358,8 @@ BOOST_AUTO_TEST_CASE(script_combineSigs)
     BOOST_CHECK(combined == scriptSigCopy || combined == scriptSig);
 
     // P2SH, single-signature case:
-    CScript pkSingle; pkSingle << keys[0].GetPubKey() << OP_CHECKSIG;
+    CScript pkSingle;
+    pkSingle << keys[0].GetPubKey() << OP_CHECKSIG;
     keystore.AddCScript(pkSingle);
     scriptPubKey.SetDestination(pkSingle.GetID());
     SignSignature(keystore, txFrom, txTo, 0);
@@ -383,7 +372,7 @@ BOOST_AUTO_TEST_CASE(script_combineSigs)
     combined = CombineSignatures(scriptPubKey, txTo, 0, scriptSigCopy, scriptSig);
     BOOST_CHECK(combined == scriptSigCopy || combined == scriptSig);
     // dummy scriptSigCopy with placeholder, should always choose non-placeholder:
-    scriptSigCopy = CScript() << OP_0 << static_cast<vector<unsigned char> >(pkSingle);
+    scriptSigCopy = CScript() << OP_0 << static_cast<vector<unsigned char>>(pkSingle);
     combined = CombineSignatures(scriptPubKey, txTo, 0, scriptSigCopy, scriptSig);
     BOOST_CHECK(combined == scriptSig);
     combined = CombineSignatures(scriptPubKey, txTo, 0, scriptSig, scriptSigCopy);

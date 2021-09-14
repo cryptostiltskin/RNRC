@@ -6,7 +6,7 @@
 #include "keystore.h"
 #include "script.h"
 
-bool CKeyStore::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
+bool CKeyStore::GetPubKey(const CKeyID& address, CPubKey& vchPubKeyOut) const
 {
     CKey key;
     if (!GetKey(address, key))
@@ -49,13 +49,12 @@ bool CBasicKeyStore::HaveCScript(const CScriptID& hash) const
 }
 
 
-bool CBasicKeyStore::GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const
+bool CBasicKeyStore::GetCScript(const CScriptID& hash, CScript& redeemScriptOut) const
 {
     {
         LOCK(cs_KeyStore);
         ScriptMap::const_iterator mi = mapScripts.find(hash);
-        if (mi != mapScripts.end())
-        {
+        if (mi != mapScripts.end()) {
             redeemScriptOut = (*mi).second;
             return true;
         }
@@ -98,12 +97,11 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
             return false;
 
         CryptedKeyMap::const_iterator mi = mapCryptedKeys.begin();
-        for (; mi != mapCryptedKeys.end(); ++mi)
-        {
-            const CPubKey &vchPubKey = (*mi).second.first;
-            const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
+        for (; mi != mapCryptedKeys.end(); ++mi) {
+            const CPubKey& vchPubKey = (*mi).second.first;
+            const std::vector<unsigned char>& vchCryptedSecret = (*mi).second.second;
             CSecret vchSecret;
-            if(!DecryptSecret(vMasterKeyIn, vchCryptedSecret, vchPubKey.GetHash(), vchSecret))
+            if (!DecryptSecret(vMasterKeyIn, vchCryptedSecret, vchPubKey.GetHash(), vchSecret))
                 return false;
             if (vchSecret.size() != 32)
                 return false;
@@ -143,7 +141,7 @@ bool CCryptoKeyStore::AddKey(const CKey& key)
 }
 
 
-bool CCryptoKeyStore::AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret)
+bool CCryptoKeyStore::AddCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret)
 {
     {
         LOCK(cs_KeyStore);
@@ -155,7 +153,7 @@ bool CCryptoKeyStore::AddCryptedKey(const CPubKey &vchPubKey, const std::vector<
     return true;
 }
 
-bool CCryptoKeyStore::GetKey(const CKeyID &address, CKey& keyOut) const
+bool CCryptoKeyStore::GetKey(const CKeyID& address, CKey& keyOut) const
 {
     {
         LOCK(cs_KeyStore);
@@ -163,10 +161,9 @@ bool CCryptoKeyStore::GetKey(const CKeyID &address, CKey& keyOut) const
             return CBasicKeyStore::GetKey(address, keyOut);
 
         CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
-        if (mi != mapCryptedKeys.end())
-        {
-            const CPubKey &vchPubKey = (*mi).second.first;
-            const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
+        if (mi != mapCryptedKeys.end()) {
+            const CPubKey& vchPubKey = (*mi).second.first;
+            const std::vector<unsigned char>& vchCryptedSecret = (*mi).second.second;
             CSecret vchSecret;
             if (!DecryptSecret(vMasterKey, vchCryptedSecret, vchPubKey.GetHash(), vchSecret))
                 return false;
@@ -180,7 +177,7 @@ bool CCryptoKeyStore::GetKey(const CKeyID &address, CKey& keyOut) const
     return false;
 }
 
-bool CCryptoKeyStore::GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const
+bool CCryptoKeyStore::GetPubKey(const CKeyID& address, CPubKey& vchPubKeyOut) const
 {
     {
         LOCK(cs_KeyStore);
@@ -188,8 +185,7 @@ bool CCryptoKeyStore::GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) co
             return CKeyStore::GetPubKey(address, vchPubKeyOut);
 
         CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
-        if (mi != mapCryptedKeys.end())
-        {
+        if (mi != mapCryptedKeys.end()) {
             vchPubKeyOut = (*mi).second.first;
             return true;
         }
@@ -205,8 +201,7 @@ bool CCryptoKeyStore::EncryptKeys(CKeyingMaterial& vMasterKeyIn)
             return false;
 
         fUseCrypto = true;
-        BOOST_FOREACH(KeyMap::value_type& mKey, mapKeys)
-        {
+        BOOST_FOREACH (KeyMap::value_type& mKey, mapKeys) {
             CKey key;
             if (!key.SetSecret(mKey.second.first, mKey.second.second))
                 return false;

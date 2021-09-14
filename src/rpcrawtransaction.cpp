@@ -7,10 +7,10 @@
 
 #include "base58.h"
 #include "bitcoinrpc.h"
-#include "txdb.h"
 #include "init.h"
 #include "main.h"
 #include "net.h"
+#include "txdb.h"
 #include "wallet.h"
 
 using namespace std;
@@ -29,8 +29,7 @@ void ScriptPubKeyToJSON(const CScript& scriptPubKey, Object& out, bool fIncludeH
     if (fIncludeHex)
         out.push_back(Pair("hex", HexStr(scriptPubKey.begin(), scriptPubKey.end())));
 
-    if (!ExtractDestinations(scriptPubKey, type, addresses, nRequired))
-    {
+    if (!ExtractDestinations(scriptPubKey, type, addresses, nRequired)) {
         out.push_back(Pair("type", GetTxnOutputType(type)));
         return;
     }
@@ -39,7 +38,7 @@ void ScriptPubKeyToJSON(const CScript& scriptPubKey, Object& out, bool fIncludeH
     out.push_back(Pair("type", GetTxnOutputType(type)));
 
     Array a;
-    BOOST_FOREACH(const CTxDestination& addr, addresses)
+    BOOST_FOREACH (const CTxDestination& addr, addresses)
         a.push_back(CBitcoinAddress(addr).ToString());
     out.push_back(Pair("addresses", a));
 }
@@ -51,13 +50,11 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
     entry.push_back(Pair("time", (int64_t)tx.nTime));
     entry.push_back(Pair("locktime", (int64_t)tx.nLockTime));
     Array vin;
-    BOOST_FOREACH(const CTxIn& txin, tx.vin)
-    {
+    BOOST_FOREACH (const CTxIn& txin, tx.vin) {
         Object in;
         if (tx.IsCoinBase())
             in.push_back(Pair("coinbase", HexStr(txin.scriptSig.begin(), txin.scriptSig.end())));
-        else
-        {
+        else {
             in.push_back(Pair("txid", txin.prevout.hash.GetHex()));
             in.push_back(Pair("vout", (int64_t)txin.prevout.n));
             Object o;
@@ -70,8 +67,7 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
     }
     entry.push_back(Pair("vin", vin));
     Array vout;
-    for (unsigned int i = 0; i < tx.vout.size(); i++)
-    {
+    for (unsigned int i = 0; i < tx.vout.size(); i++) {
         const CTxOut& txout = tx.vout[i];
         Object out;
         out.push_back(Pair("value", ValueFromAmount(txout.nValue)));
@@ -83,20 +79,16 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
     }
     entry.push_back(Pair("vout", vout));
 
-    if (hashBlock != 0)
-    {
+    if (hashBlock != 0) {
         entry.push_back(Pair("blockhash", hashBlock.GetHex()));
         map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashBlock);
-        if (mi != mapBlockIndex.end() && (*mi).second)
-        {
+        if (mi != mapBlockIndex.end() && (*mi).second) {
             CBlockIndex* pindex = (*mi).second;
-            if (pindex->IsInMainChain())
-            {
+            if (pindex->IsInMainChain()) {
                 entry.push_back(Pair("confirmations", 1 + nBestHeight - pindex->nHeight));
                 entry.push_back(Pair("time", (int64_t)pindex->nTime));
                 entry.push_back(Pair("blocktime", (int64_t)pindex->nTime));
-            }
-            else
+            } else
                 entry.push_back(Pair("confirmations", 0));
         }
     }
@@ -159,32 +151,28 @@ Value listunspent(const Array& params, bool fHelp)
         nMaxDepth = params[1].get_int();
 
     set<CBitcoinAddress> setAddress;
-    if (params.size() > 2)
-    {
+    if (params.size() > 2) {
         Array inputs = params[2].get_array();
-        BOOST_FOREACH(Value& input, inputs)
-        {
+        BOOST_FOREACH (Value& input, inputs) {
             CBitcoinAddress address(input.get_str());
             if (!address.IsValid())
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid RNRC address: ")+input.get_str());
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid RNRC address: ") + input.get_str());
             if (setAddress.count(address))
-                throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+input.get_str());
-           setAddress.insert(address);
+                throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + input.get_str());
+            setAddress.insert(address);
         }
     }
 
     Array results;
     vector<COutput> vecOutputs;
     pwalletMain->AvailableCoins(vecOutputs, false);
-    BOOST_FOREACH(const COutput& out, vecOutputs)
-    {
+    BOOST_FOREACH (const COutput& out, vecOutputs) {
         if (out.nDepth < nMinDepth || out.nDepth > nMaxDepth)
             continue;
 
-        if(setAddress.size())
-        {
+        if (setAddress.size()) {
             CTxDestination address;
-            if(!ExtractDestination(out.tx->vout[out.i].scriptPubKey, address))
+            if (!ExtractDestination(out.tx->vout[out.i].scriptPubKey, address))
                 continue;
 
             if (!setAddress.count(address))
@@ -197,15 +185,14 @@ Value listunspent(const Array& params, bool fHelp)
         entry.push_back(Pair("txid", out.tx->GetHash().GetHex()));
         entry.push_back(Pair("vout", out.i));
         CTxDestination address;
-        if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address))
-        {
+        if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address)) {
             entry.push_back(Pair("address", CBitcoinAddress(address).ToString()));
             if (pwalletMain->mapAddressBook.count(address))
                 entry.push_back(Pair("account", pwalletMain->mapAddressBook[address]));
         }
         entry.push_back(Pair("scriptPubKey", HexStr(pk.begin(), pk.end())));
-        entry.push_back(Pair("amount",ValueFromAmount(nValue)));
-        entry.push_back(Pair("confirmations",out.nDepth));
+        entry.push_back(Pair("amount", ValueFromAmount(nValue)));
+        entry.push_back(Pair("confirmations", out.nDepth));
         results.push_back(entry);
     }
 
@@ -231,8 +218,7 @@ Value createrawtransaction(const Array& params, bool fHelp)
 
     CTransaction rawTx;
 
-    BOOST_FOREACH(Value& input, inputs)
-    {
+    BOOST_FOREACH (Value& input, inputs) {
         const Object& o = input.get_obj();
 
         const Value& txid_v = find_value(o, "txid");
@@ -254,14 +240,13 @@ Value createrawtransaction(const Array& params, bool fHelp)
     }
 
     set<CBitcoinAddress> setAddress;
-    BOOST_FOREACH(const Pair& s, sendTo)
-    {
+    BOOST_FOREACH (const Pair& s, sendTo) {
         CBitcoinAddress address(s.name_);
         if (!address.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid RNRC address: ")+s.name_);
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid RNRC address: ") + s.name_);
 
         if (setAddress.count(address))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+s.name_);
+            throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + s.name_);
         setAddress.insert(address);
 
         CScript scriptPubKey;
@@ -291,8 +276,7 @@ Value decoderawtransaction(const Array& params, bool fHelp)
     CTransaction tx;
     try {
         ssData >> tx;
-    }
-    catch (std::exception &e) {
+    } catch (std::exception& e) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }
 
@@ -313,7 +297,7 @@ Value decodescript(const Array& params, bool fHelp)
 
     Object r;
     CScript script;
-    if (params[0].get_str().size() > 0){
+    if (params[0].get_str().size() > 0) {
         vector<unsigned char> scriptData(ParseHexV(params[0], "argument"));
         script = CScript(scriptData.begin(), scriptData.end());
     } else {
@@ -339,22 +323,20 @@ Value signrawtransaction(const Array& params, bool fHelp)
             "ALL|ANYONECANPAY, NONE|ANYONECANPAY, SINGLE|ANYONECANPAY.\n"
             "Returns json object with keys:\n"
             "  hex : raw transaction with signature(s) (hex-encoded string)\n"
-            "  complete : 1 if transaction has a complete set of signature (0 if not)"
-            + HelpRequiringPassphrase());
+            "  complete : 1 if transaction has a complete set of signature (0 if not)" +
+            HelpRequiringPassphrase());
 
     RPCTypeCheck(params, list_of(str_type)(array_type)(array_type)(str_type), true);
 
     vector<unsigned char> txData(ParseHex(params[0].get_str()));
     CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
     vector<CTransaction> txVariants;
-    while (!ssData.empty())
-    {
+    while (!ssData.empty()) {
         try {
             CTransaction tx;
             ssData >> tx;
             txVariants.push_back(tx);
-        }
-        catch (std::exception &e) {
+        } catch (std::exception& e) {
             throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
         }
     }
@@ -369,8 +351,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
 
     // Fetch previous transactions (inputs):
     map<COutPoint, CScript> mapPrevOut;
-    for (unsigned int i = 0; i < mergedTx.vin.size(); i++)
-    {
+    for (unsigned int i = 0; i < mergedTx.vin.size(); i++) {
         CTransaction tempTx;
         MapPrevTx mapPrevTx;
         CTxDB txdb("r");
@@ -382,20 +363,17 @@ Value signrawtransaction(const Array& params, bool fHelp)
         tempTx.FetchInputs(txdb, unused, false, false, mapPrevTx, fInvalid);
 
         // Copy results into mapPrevOut:
-        BOOST_FOREACH(const CTxIn& txin, tempTx.vin)
-        {
+        BOOST_FOREACH (const CTxIn& txin, tempTx.vin) {
             const uint256& prevHash = txin.prevout.hash;
-            if (mapPrevTx.count(prevHash) && mapPrevTx[prevHash].second.vout.size()>txin.prevout.n)
+            if (mapPrevTx.count(prevHash) && mapPrevTx[prevHash].second.vout.size() > txin.prevout.n)
                 mapPrevOut[txin.prevout] = mapPrevTx[prevHash].second.vout[txin.prevout.n].scriptPubKey;
         }
     }
 
     // Add previous txouts given in the RPC call:
-    if (params.size() > 1 && params[1].type() != null_type)
-    {
+    if (params.size() > 1 && params[1].type() != null_type) {
         Array prevTxs = params[1].get_array();
-        BOOST_FOREACH(Value& p, prevTxs)
-        {
+        BOOST_FOREACH (Value& p, prevTxs) {
             if (p.type() != obj_type)
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "expected object with {\"txid'\",\"vout\",\"scriptPubKey\"}");
 
@@ -420,58 +398,44 @@ Value signrawtransaction(const Array& params, bool fHelp)
             CScript scriptPubKey(pkData.begin(), pkData.end());
 
             COutPoint outpoint(txid, nOut);
-            if (mapPrevOut.count(outpoint))
-            {
+            if (mapPrevOut.count(outpoint)) {
                 // Complain if scriptPubKey doesn't match
-                if (mapPrevOut[outpoint] != scriptPubKey)
-                {
+                if (mapPrevOut[outpoint] != scriptPubKey) {
                     string err("Previous output scriptPubKey mismatch:\n");
-                    err = err + mapPrevOut[outpoint].ToString() + "\nvs:\n"+
-                        scriptPubKey.ToString();
+                    err = err + mapPrevOut[outpoint].ToString() + "\nvs:\n" +
+                          scriptPubKey.ToString();
                     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, err);
                 }
-            }
-            else
+            } else
                 mapPrevOut[outpoint] = scriptPubKey;
         }
     }
 
     bool fGivenKeys = false;
     CBasicKeyStore tempKeystore;
-    if (params.size() > 2 && params[2].type() != null_type)
-    {
+    if (params.size() > 2 && params[2].type() != null_type) {
         fGivenKeys = true;
         Array keys = params[2].get_array();
-        BOOST_FOREACH(Value k, keys)
-        {
+        BOOST_FOREACH (Value k, keys) {
             CBitcoinSecret vchSecret;
             bool fGood = vchSecret.SetString(k.get_str());
             if (!fGood)
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY,"Invalid private key");
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key");
             CKey key;
             bool fCompressed;
             CSecret secret = vchSecret.GetSecret(fCompressed);
             key.SetSecret(secret, fCompressed);
             tempKeystore.AddKey(key);
         }
-    }
-    else
+    } else
         EnsureWalletIsUnlocked();
 
     const CKeyStore& keystore = (fGivenKeys ? tempKeystore : *pwalletMain);
 
     int nHashType = SIGHASH_ALL;
-    if (params.size() > 3 && params[3].type() != null_type)
-    {
+    if (params.size() > 3 && params[3].type() != null_type) {
         static map<string, int> mapSigHashValues =
-            boost::assign::map_list_of
-            (string("ALL"), int(SIGHASH_ALL))
-            (string("ALL|ANYONECANPAY"), int(SIGHASH_ALL|SIGHASH_ANYONECANPAY))
-            (string("NONE"), int(SIGHASH_NONE))
-            (string("NONE|ANYONECANPAY"), int(SIGHASH_NONE|SIGHASH_ANYONECANPAY))
-            (string("SINGLE"), int(SIGHASH_SINGLE))
-            (string("SINGLE|ANYONECANPAY"), int(SIGHASH_SINGLE|SIGHASH_ANYONECANPAY))
-            ;
+            boost::assign::map_list_of(string("ALL"), int(SIGHASH_ALL))(string("ALL|ANYONECANPAY"), int(SIGHASH_ALL | SIGHASH_ANYONECANPAY))(string("NONE"), int(SIGHASH_NONE))(string("NONE|ANYONECANPAY"), int(SIGHASH_NONE | SIGHASH_ANYONECANPAY))(string("SINGLE"), int(SIGHASH_SINGLE))(string("SINGLE|ANYONECANPAY"), int(SIGHASH_SINGLE | SIGHASH_ANYONECANPAY));
         string strHashType = params[3].get_str();
         if (mapSigHashValues.count(strHashType))
             nHashType = mapSigHashValues[strHashType];
@@ -482,11 +446,9 @@ Value signrawtransaction(const Array& params, bool fHelp)
     bool fHashSingle = ((nHashType & ~SIGHASH_ANYONECANPAY) == SIGHASH_SINGLE);
 
     // Sign what we can:
-    for (unsigned int i = 0; i < mergedTx.vin.size(); i++)
-    {
+    for (unsigned int i = 0; i < mergedTx.vin.size(); i++) {
         CTxIn& txin = mergedTx.vin[i];
-        if (mapPrevOut.count(txin.prevout) == 0)
-        {
+        if (mapPrevOut.count(txin.prevout) == 0) {
             fComplete = false;
             continue;
         }
@@ -498,8 +460,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
             SignSignature(keystore, prevPubKey, mergedTx, i, nHashType);
 
         // ... and merge in other signatures:
-        BOOST_FOREACH(const CTransaction& txv, txVariants)
-        {
+        BOOST_FOREACH (const CTransaction& txv, txVariants) {
             txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, txv.vin[i].scriptSig);
         }
         if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, 0))
@@ -532,8 +493,7 @@ Value sendrawtransaction(const Array& params, bool fHelp)
     // deserialize binary data stream
     try {
         ssData >> tx;
-    }
-    catch (std::exception &e) {
+    } catch (std::exception& e) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }
     uint256 hashTx = tx.GetHash();
@@ -542,15 +502,12 @@ Value sendrawtransaction(const Array& params, bool fHelp)
     // or in the memory pool:
     CTransaction existingTx;
     uint256 hashBlock = 0;
-    if (GetTransaction(hashTx, existingTx, hashBlock))
-    {
+    if (GetTransaction(hashTx, existingTx, hashBlock)) {
         if (hashBlock != 0)
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("transaction already in block ")+hashBlock.GetHex());
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("transaction already in block ") + hashBlock.GetHex());
         // Not in block, but already in the memory pool; will drop
         // through to re-relay it.
-    }
-    else
-    {
+    } else {
         // push to local node
         if (!AcceptToMemoryPool(mempool, tx, NULL))
             throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX rejected");

@@ -1,10 +1,10 @@
-#include <vector>
-#include <boost/test/unit_test.hpp>
 #include <boost/foreach.hpp>
+#include <boost/test/unit_test.hpp>
+#include <vector>
 
 #include "main.h"
-#include "wallet.h"
 #include "util.h"
+#include "wallet.h"
 
 using namespace std;
 
@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(util_criticalsection)
         break;
 
         BOOST_ERROR("break was swallowed!");
-    } while(0);
+    } while (0);
 
     do {
         TRY_LOCK(cs, lockTest);
@@ -27,11 +27,11 @@ BOOST_AUTO_TEST_CASE(util_criticalsection)
             break;
 
         BOOST_ERROR("break was swallowed!");
-    } while(0);
+    } while (0);
 }
 
 BOOST_AUTO_TEST_CASE(util_MedianFilter)
-{    
+{
     CMedianFilter<int> filter(5, 15);
 
     BOOST_CHECK_EQUAL(filter.median(), 15);
@@ -56,12 +56,11 @@ BOOST_AUTO_TEST_CASE(util_MedianFilter)
 }
 
 static const unsigned char ParseHex_expected[65] = {
-    0x04, 0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, 0x48, 0x27, 0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, 0xb7, 
-    0x10, 0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, 0x09, 0xa6, 0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, 0xde, 
-    0xb6, 0x49, 0xf6, 0xbc, 0x3f, 0x4c, 0xef, 0x38, 0xc4, 0xf3, 0x55, 0x04, 0xe5, 0x1e, 0xc1, 0x12, 
-    0xde, 0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57, 0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d, 
-    0x5f
-};
+    0x04, 0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, 0x48, 0x27, 0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, 0xb7,
+    0x10, 0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, 0x09, 0xa6, 0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, 0xde,
+    0xb6, 0x49, 0xf6, 0xbc, 0x3f, 0x4c, 0xef, 0x38, 0xc4, 0xf3, 0x55, 0x04, 0xe5, 0x1e, 0xc1, 0x12,
+    0xde, 0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57, 0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d,
+    0x5f};
 BOOST_AUTO_TEST_CASE(util_ParseHex)
 {
     std::vector<unsigned char> result;
@@ -103,7 +102,7 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
 
 BOOST_AUTO_TEST_CASE(util_DateTimeStrFormat)
 {
-/*These are platform-dependant and thus removed to avoid useless test failures
+    /*These are platform-dependant and thus removed to avoid useless test failures
     BOOST_CHECK_EQUAL(DateTimeStrFormat("%x %H:%M:%S", 0), "01/01/70 00:00:00");
     BOOST_CHECK_EQUAL(DateTimeStrFormat("%x %H:%M:%S", 0x7FFFFFFF), "01/19/38 03:14:07");
     // Formats used within Bitcoin
@@ -114,7 +113,7 @@ BOOST_AUTO_TEST_CASE(util_DateTimeStrFormat)
 
 BOOST_AUTO_TEST_CASE(util_ParseParameters)
 {
-    const char *argv_test[] = {"-ignored", "-a", "-b", "-ccc=argument", "-ccc=multiple", "f", "-d=e"};
+    const char* argv_test[] = {"-ignored", "-a", "-b", "-ccc=argument", "-ccc=multiple", "f", "-d=e"};
 
     ParseParameters(0, (char**)argv_test);
     BOOST_CHECK(mapArgs.empty() && mapMultiArgs.empty());
@@ -123,14 +122,12 @@ BOOST_AUTO_TEST_CASE(util_ParseParameters)
     BOOST_CHECK(mapArgs.empty() && mapMultiArgs.empty());
 
     ParseParameters(5, (char**)argv_test);
-    // expectation: -ignored is ignored (program name argument), 
+    // expectation: -ignored is ignored (program name argument),
     // -a, -b and -ccc end up in map, -d ignored because it is after
     // a non-option argument (non-GNU option parsing)
     BOOST_CHECK(mapArgs.size() == 3 && mapMultiArgs.size() == 3);
-    BOOST_CHECK(mapArgs.count("-a") && mapArgs.count("-b") && mapArgs.count("-ccc") 
-                && !mapArgs.count("f") && !mapArgs.count("-d"));
-    BOOST_CHECK(mapMultiArgs.count("-a") && mapMultiArgs.count("-b") && mapMultiArgs.count("-ccc") 
-                && !mapMultiArgs.count("f") && !mapMultiArgs.count("-d"));
+    BOOST_CHECK(mapArgs.count("-a") && mapArgs.count("-b") && mapArgs.count("-ccc") && !mapArgs.count("f") && !mapArgs.count("-d"));
+    BOOST_CHECK(mapMultiArgs.count("-a") && mapMultiArgs.count("-b") && mapMultiArgs.count("-ccc") && !mapMultiArgs.count("f") && !mapMultiArgs.count("-d"));
 
     BOOST_CHECK(mapArgs["-a"] == "" && mapArgs["-ccc"] == "multiple");
     BOOST_CHECK(mapMultiArgs["-ccc"].size() == 2);
@@ -174,28 +171,28 @@ BOOST_AUTO_TEST_CASE(util_WildcardMatch)
 BOOST_AUTO_TEST_CASE(util_FormatMoney)
 {
     BOOST_CHECK_EQUAL(FormatMoney(0, false), "0.00");
-    BOOST_CHECK_EQUAL(FormatMoney((COIN/10000)*123456789, false), "12345.6789");
+    BOOST_CHECK_EQUAL(FormatMoney((COIN / 10000) * 123456789, false), "12345.6789");
     BOOST_CHECK_EQUAL(FormatMoney(COIN, true), "+1.00");
     BOOST_CHECK_EQUAL(FormatMoney(-COIN, false), "-1.00");
     BOOST_CHECK_EQUAL(FormatMoney(-COIN, true), "-1.00");
 
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*100000000, false), "100000000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*10000000, false), "10000000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*1000000, false), "1000000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*100000, false), "100000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*10000, false), "10000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*1000, false), "1000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*100, false), "100.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*10, false), "10.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 100000000, false), "100000000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 10000000, false), "10000000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 1000000, false), "1000000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 100000, false), "100000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 10000, false), "10000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 1000, false), "1000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 100, false), "100.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 10, false), "10.00");
     BOOST_CHECK_EQUAL(FormatMoney(COIN, false), "1.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/10, false), "0.10");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/100, false), "0.01");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/1000, false), "0.001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/10000, false), "0.0001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/100000, false), "0.00001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/1000000, false), "0.000001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/10000000, false), "0.0000001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/100000000, false), "0.00000001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 10, false), "0.10");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 100, false), "0.01");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 1000, false), "0.001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 10000, false), "0.0001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 100000, false), "0.00001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 1000000, false), "0.000001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 10000000, false), "0.0000001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 100000000, false), "0.00000001");
 }
 
 BOOST_AUTO_TEST_CASE(util_ParseMoney)
@@ -205,42 +202,42 @@ BOOST_AUTO_TEST_CASE(util_ParseMoney)
     BOOST_CHECK_EQUAL(ret, 0);
 
     BOOST_CHECK(ParseMoney("12345.6789", ret));
-    BOOST_CHECK_EQUAL(ret, (COIN/10000)*123456789);
+    BOOST_CHECK_EQUAL(ret, (COIN / 10000) * 123456789);
 
     BOOST_CHECK(ParseMoney("100000000.00", ret));
-    BOOST_CHECK_EQUAL(ret, COIN*100000000);
+    BOOST_CHECK_EQUAL(ret, COIN * 100000000);
     BOOST_CHECK(ParseMoney("10000000.00", ret));
-    BOOST_CHECK_EQUAL(ret, COIN*10000000);
+    BOOST_CHECK_EQUAL(ret, COIN * 10000000);
     BOOST_CHECK(ParseMoney("1000000.00", ret));
-    BOOST_CHECK_EQUAL(ret, COIN*1000000);
+    BOOST_CHECK_EQUAL(ret, COIN * 1000000);
     BOOST_CHECK(ParseMoney("100000.00", ret));
-    BOOST_CHECK_EQUAL(ret, COIN*100000);
+    BOOST_CHECK_EQUAL(ret, COIN * 100000);
     BOOST_CHECK(ParseMoney("10000.00", ret));
-    BOOST_CHECK_EQUAL(ret, COIN*10000);
+    BOOST_CHECK_EQUAL(ret, COIN * 10000);
     BOOST_CHECK(ParseMoney("1000.00", ret));
-    BOOST_CHECK_EQUAL(ret, COIN*1000);
+    BOOST_CHECK_EQUAL(ret, COIN * 1000);
     BOOST_CHECK(ParseMoney("100.00", ret));
-    BOOST_CHECK_EQUAL(ret, COIN*100);
+    BOOST_CHECK_EQUAL(ret, COIN * 100);
     BOOST_CHECK(ParseMoney("10.00", ret));
-    BOOST_CHECK_EQUAL(ret, COIN*10);
+    BOOST_CHECK_EQUAL(ret, COIN * 10);
     BOOST_CHECK(ParseMoney("1.00", ret));
     BOOST_CHECK_EQUAL(ret, COIN);
     BOOST_CHECK(ParseMoney("0.1", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/10);
+    BOOST_CHECK_EQUAL(ret, COIN / 10);
     BOOST_CHECK(ParseMoney("0.01", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/100);
+    BOOST_CHECK_EQUAL(ret, COIN / 100);
     BOOST_CHECK(ParseMoney("0.001", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/1000);
+    BOOST_CHECK_EQUAL(ret, COIN / 1000);
     BOOST_CHECK(ParseMoney("0.0001", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/10000);
+    BOOST_CHECK_EQUAL(ret, COIN / 10000);
     BOOST_CHECK(ParseMoney("0.00001", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/100000);
+    BOOST_CHECK_EQUAL(ret, COIN / 100000);
     BOOST_CHECK(ParseMoney("0.000001", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/1000000);
+    BOOST_CHECK_EQUAL(ret, COIN / 1000000);
     BOOST_CHECK(ParseMoney("0.0000001", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/10000000);
+    BOOST_CHECK_EQUAL(ret, COIN / 10000000);
     BOOST_CHECK(ParseMoney("0.00000001", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/100000000);
+    BOOST_CHECK_EQUAL(ret, COIN / 100000000);
 
     // Attempted 63 bit overflow should fail
     BOOST_CHECK(!ParseMoney("92233720368.54775808", ret));
@@ -264,62 +261,60 @@ BOOST_AUTO_TEST_CASE(util_IsHex)
 BOOST_AUTO_TEST_CASE(util_seed_insecure_rand)
 {
     // Expected results for the determinstic seed.
-    const uint32_t exp_vals[11] = {  91632771U,1889679809U,3842137544U,3256031132U,
-                                   1761911779U, 489223532U,2692793790U,2737472863U,
-                                   2796262275U,1309899767U,840571781U};
+    const uint32_t exp_vals[11] = {91632771U, 1889679809U, 3842137544U, 3256031132U,
+                                   1761911779U, 489223532U, 2692793790U, 2737472863U,
+                                   2796262275U, 1309899767U, 840571781U};
     // Expected 0s in rand()%(idx+2) for the determinstic seed.
-    const int exp_count[9] = {5013,3346,2415,1972,1644,1386,1176,1096,1009};
+    const int exp_count[9] = {5013, 3346, 2415, 1972, 1644, 1386, 1176, 1096, 1009};
     int i;
-    int count=0;
+    int count = 0;
 
     seed_insecure_rand();
 
     //Does the non-determistic rand give us results that look too like the determinstic one?
-    for (i=0;i<10;i++)
-    {
+    for (i = 0; i < 10; i++) {
         int match = 0;
         uint32_t rval = insecure_rand();
-        for (int j=0;j<11;j++)match |= rval==exp_vals[j];
+        for (int j = 0; j < 11; j++)
+            match |= rval == exp_vals[j];
         count += match;
     }
     // sum(binomial(10,i)*(11/(2^32))^i*(1-(11/(2^32)))^(10-i),i,0,4) ~= 1-1/2^134.73
     // So _very_ unlikely to throw a false failure here.
-    BOOST_CHECK(count<=4);
+    BOOST_CHECK(count <= 4);
 
-    for (int mod=2;mod<11;mod++)
-    {
+    for (int mod = 2; mod < 11; mod++) {
         int mask = 1;
         // Really rough binomal confidence approximation.
-        int err = 30*10000./mod*sqrt((1./mod*(1-1./mod))/10000.);
+        int err = 30 * 10000. / mod * sqrt((1. / mod * (1 - 1. / mod)) / 10000.);
         //mask is 2^ceil(log2(mod))-1
-        while(mask<mod-1)mask=(mask<<1)+1;
+        while (mask < mod - 1)
+            mask = (mask << 1) + 1;
 
         count = 0;
         //How often does it get a zero from the uniform range [0,mod)?
-        for (i=0;i<10000;i++)
-        {
+        for (i = 0; i < 10000; i++) {
             uint32_t rval;
-            do{
-                rval=insecure_rand()&mask;
-            }while(rval>=(uint32_t)mod);
-            count += rval==0;
+            do {
+                rval = insecure_rand() & mask;
+            } while (rval >= (uint32_t)mod);
+            count += rval == 0;
         }
-        BOOST_CHECK(count<=10000/mod+err);
-        BOOST_CHECK(count>=10000/mod-err);
+        BOOST_CHECK(count <= 10000 / mod + err);
+        BOOST_CHECK(count >= 10000 / mod - err);
     }
 
     seed_insecure_rand(true);
 
-    for (i=0;i<11;i++)
-    {
-        BOOST_CHECK_EQUAL(insecure_rand(),exp_vals[i]);
+    for (i = 0; i < 11; i++) {
+        BOOST_CHECK_EQUAL(insecure_rand(), exp_vals[i]);
     }
 
-    for (int mod=2;mod<11;mod++)
-    {
+    for (int mod = 2; mod < 11; mod++) {
         count = 0;
-        for (i=0;i<10000;i++) count += insecure_rand()%mod==0;
-        BOOST_CHECK_EQUAL(count,exp_count[mod-2]);
+        for (i = 0; i < 10000; i++)
+            count += insecure_rand() % mod == 0;
+        BOOST_CHECK_EQUAL(count, exp_count[mod - 2]);
     }
 }
 

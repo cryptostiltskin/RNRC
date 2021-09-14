@@ -17,7 +17,7 @@ ResetArgs(const std::string& strArg)
 
     // Convert to char*:
     std::vector<const char*> vecChar;
-    BOOST_FOREACH(std::string& s, vecArg)
+    BOOST_FOREACH (std::string& s, vecArg)
         vecChar.push_back(s.c_str());
 
     ParseParameters(vecChar.size(), &vecChar[0]);
@@ -59,17 +59,17 @@ BOOST_AUTO_TEST_CASE(boolarg)
     BOOST_CHECK(!GetBoolArg("-foo", false));
     BOOST_CHECK(!GetBoolArg("-foo", true));
 
-    ResetArgs("-foo -nofoo");  // -foo should win
+    ResetArgs("-foo -nofoo"); // -foo should win
     BOOST_CHECK(GetBoolArg("-foo"));
     BOOST_CHECK(GetBoolArg("-foo", false));
     BOOST_CHECK(GetBoolArg("-foo", true));
 
-    ResetArgs("-foo=1 -nofoo=1");  // -foo should win
+    ResetArgs("-foo=1 -nofoo=1"); // -foo should win
     BOOST_CHECK(GetBoolArg("-foo"));
     BOOST_CHECK(GetBoolArg("-foo", false));
     BOOST_CHECK(GetBoolArg("-foo", true));
 
-    ResetArgs("-foo=0 -nofoo=0");  // -foo should win
+    ResetArgs("-foo=0 -nofoo=0"); // -foo should win
     BOOST_CHECK(!GetBoolArg("-foo"));
     BOOST_CHECK(!GetBoolArg("-foo", false));
     BOOST_CHECK(!GetBoolArg("-foo", true));
@@ -84,7 +84,6 @@ BOOST_AUTO_TEST_CASE(boolarg)
     BOOST_CHECK(!GetBoolArg("-foo"));
     BOOST_CHECK(!GetBoolArg("-foo", false));
     BOOST_CHECK(!GetBoolArg("-foo", true));
-
 }
 
 BOOST_AUTO_TEST_CASE(stringarg)
@@ -108,7 +107,6 @@ BOOST_AUTO_TEST_CASE(stringarg)
     ResetArgs("-foo=eleven");
     BOOST_CHECK_EQUAL(GetArg("-foo", ""), "eleven");
     BOOST_CHECK_EQUAL(GetArg("-foo", "eleven"), "eleven");
-
 }
 
 BOOST_AUTO_TEST_CASE(intarg)

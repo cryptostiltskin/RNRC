@@ -40,14 +40,12 @@ public:
     // such as the various parameters to scrypt
     std::vector<unsigned char> vchOtherDerivationParameters;
 
-    IMPLEMENT_SERIALIZE
-    (
+    IMPLEMENT_SERIALIZE(
         READWRITE(vchCryptedKey);
         READWRITE(vchSalt);
         READWRITE(nDerivationMethod);
         READWRITE(nDeriveIterations);
-        READWRITE(vchOtherDerivationParameters);
-    )
+        READWRITE(vchOtherDerivationParameters);)
     CMasterKey()
     {
         // 25000 rounds is just under 0.1 seconds on a 1.86 GHz Pentium M
@@ -59,26 +57,24 @@ public:
 
     CMasterKey(unsigned int nDerivationMethodIndex)
     {
-        switch (nDerivationMethodIndex)
-        {
-            case 0: // sha512
-            default:
-                nDeriveIterations = 25000;
-                nDerivationMethod = 0;
-                vchOtherDerivationParameters = std::vector<unsigned char>(0);
+        switch (nDerivationMethodIndex) {
+        case 0: // sha512
+        default:
+            nDeriveIterations = 25000;
+            nDerivationMethod = 0;
+            vchOtherDerivationParameters = std::vector<unsigned char>(0);
             break;
 
-            case 1: // scrypt+sha512
-                nDeriveIterations = 10000;
-                nDerivationMethod = 1;
-                vchOtherDerivationParameters = std::vector<unsigned char>(0);
+        case 1: // scrypt+sha512
+            nDeriveIterations = 10000;
+            nDerivationMethod = 1;
+            vchOtherDerivationParameters = std::vector<unsigned char>(0);
             break;
         }
     }
-
 };
 
-typedef std::vector<unsigned char, secure_allocator<unsigned char> > CKeyingMaterial;
+typedef std::vector<unsigned char, secure_allocator<unsigned char>> CKeyingMaterial;
 
 /** Encryption/decryption context with key information */
 class CCrypter
@@ -89,15 +85,15 @@ private:
     bool fKeySet;
 
 public:
-    bool SetKeyFromPassphrase(const SecureString &strKeyData, const std::vector<unsigned char>& chSalt, const unsigned int nRounds, const unsigned int nDerivationMethod);
-    bool Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char> &vchCiphertext);
+    bool SetKeyFromPassphrase(const SecureString& strKeyData, const std::vector<unsigned char>& chSalt, const unsigned int nRounds, const unsigned int nDerivationMethod);
+    bool Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char>& vchCiphertext);
     bool Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingMaterial& vchPlaintext);
     bool SetKey(const CKeyingMaterial& chNewKey, const std::vector<unsigned char>& chNewIV);
 
     void CleanKey()
     {
-        OPENSSL_cleanse(&chKey, sizeof chKey);
-        OPENSSL_cleanse(&chIV, sizeof chIV);
+        OPENSSL_cleanse(chKey, sizeof(chKey));
+        OPENSSL_cleanse(chIV, sizeof(chIV));
         fKeySet = false;
     }
 
@@ -121,7 +117,7 @@ public:
     }
 };
 
-bool EncryptSecret(CKeyingMaterial& vMasterKey, const CSecret &vchPlaintext, const uint256& nIV, std::vector<unsigned char> &vchCiphertext);
-bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char> &vchCiphertext, const uint256& nIV, CSecret &vchPlaintext);
+bool EncryptSecret(CKeyingMaterial& vMasterKey, const CSecret& vchPlaintext, const uint256& nIV, std::vector<unsigned char>& vchCiphertext);
+bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCiphertext, const uint256& nIV, CSecret& vchPlaintext);
 
 #endif
